@@ -10,6 +10,8 @@ builder.Services.AddDbContext<DataContext>(x => x.UseSqlServer(builder.Configura
 
 var app = builder.Build();
 
+app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
