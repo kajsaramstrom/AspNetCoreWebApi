@@ -1,8 +1,7 @@
-﻿namespace Infrastructure.Entities;
+﻿namespace Infrastructure.Models;
 
-public class CourseEntity
+public class CourseDto
 {
-    public int Id { get; set; }
     public string Title { get; set; } = null!;
     public decimal? Price { get; set; }
     public decimal? DiscountPrice { get; set; }
