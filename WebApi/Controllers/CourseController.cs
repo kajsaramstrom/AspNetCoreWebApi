@@ -43,9 +43,8 @@ public class CourseController(DataContext context) : ControllerBase
 
             return Conflict("Course with the same title already exist");
         }
+
         return BadRequest();
-
-
     }
 
 
