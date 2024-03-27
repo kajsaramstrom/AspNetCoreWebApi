@@ -52,6 +52,7 @@ public class SubscriberController(DataContext context) : ControllerBase
 
     #region READ
 
+    [UseApiKey]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -71,6 +72,20 @@ public class SubscriberController(DataContext context) : ControllerBase
         }
 
         return Ok(subscriber);
+    }
+
+    [HttpGet("email/{email}")]
+
+    public async Task<IActionResult> FindByEmail(string email)
+    {
+        var sub = await _context.Subscribers.FirstOrDefaultAsync(x => x.Email == email);
+
+        if (sub != null)
+        {
+            return Ok(sub);
+        }
+
+        return NotFound();
     }
 
     #endregion
@@ -117,6 +132,21 @@ public class SubscriberController(DataContext context) : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok("Subscriber was deleted.");
+    }
+
+    [HttpDelete("email")]
+    public async Task<IActionResult> DeleteWithEmail(string email)
+    {
+        var result = await FindByEmail(email);
+
+        if (result is OkObjectResult okResult && okResult.Value is SubscribeEntity sub)
+        {
+            _context.Subscribers.Remove(sub);
+            await _context.SaveChangesAsync();
+            return Ok("Subscriber was deleted");
+        }
+
+        return result;
     }
 
     #endregion
