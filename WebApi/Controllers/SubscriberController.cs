@@ -52,7 +52,6 @@ public class SubscriberController(DataContext context) : ControllerBase
 
     #region READ
 
-    [UseApiKey]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -119,6 +118,7 @@ public class SubscriberController(DataContext context) : ControllerBase
     #region DELETE
 
     [HttpDelete("{id}")]
+    [UseApiKey]
     public async Task<IActionResult> Delete(int id)
     {
         var subscriber = await _context.Subscribers.FindAsync(id);

@@ -12,4 +12,5 @@ public class CourseEntity
     public decimal? LikesInPercent { get; set; }
     public string? Author { get; set; }
     public string? CourseImageUrl { get; set; }
+    public virtual IEnumerable<SavedCourseEntity> SavedCourses { get; set; } = new List<SavedCourseEntity>();
 }
