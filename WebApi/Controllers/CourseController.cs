@@ -17,7 +17,6 @@ public class CourseController(DataContext context) : ControllerBase
     #region Create
 
     [HttpPost]
-
     public async Task<IActionResult> Create(CourseDto course)
     {
         if (ModelState.IsValid)
@@ -47,13 +46,9 @@ public class CourseController(DataContext context) : ControllerBase
 
         return BadRequest();
     }
-
-
     #endregion
 
-
     #region GET
-
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -80,7 +75,6 @@ public class CourseController(DataContext context) : ControllerBase
     #region UPDATE
 
     [HttpPut("{id}")]
-
     public async Task<IActionResult> Update(int id, CourseDto dto)
     {
         var course = await _context.Courses.FindAsync(id);
