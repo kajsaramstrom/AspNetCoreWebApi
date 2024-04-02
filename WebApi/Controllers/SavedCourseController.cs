@@ -120,8 +120,9 @@ namespace WebAPI.Controllers
         #endregion
 
         #region DELETE
-        [HttpDelete]
-        public async Task<IActionResult> Delete(CourseToSaveDto dto)
+        [HttpDelete("{email}")]
+
+        public async Task<IActionResult> Delete(string email, [FromBody] CourseToSaveDto dto)
         {
             if (ModelState.IsValid)
             {
@@ -144,6 +145,32 @@ namespace WebAPI.Controllers
                         }
                     }
                     return NotFound("no course to remove was found");
+                }
+            }
+            return BadRequest();
+        }
+
+        [HttpDelete("{email}/courses")]
+        public async Task<IActionResult> DeleteAllCourses(string email)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+                var courses = await GetUserCoursesAsync(user!.Email);
+
+                if (courses != null)
+                {
+                    foreach (var course in courses)
+                    {
+                        var savedCourseEntityToDelete = await _context.SavedCourses.FirstOrDefaultAsync(c => c.CourseId == course.CourseId && c.UserId == user.Id);
+
+                        if (savedCourseEntityToDelete != null)
+                        {
+                            _context.SavedCourses.Remove(savedCourseEntityToDelete);
+                        }
+                    }
+                    await _context.SaveChangesAsync();
+                    return Ok("All courses removed from user's list");
                 }
             }
             return BadRequest();
