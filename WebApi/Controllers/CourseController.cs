@@ -4,6 +4,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using WebApi.Filters;
 
 namespace WebApi.Controllers;
@@ -50,9 +51,25 @@ public class CourseController(DataContext context) : ControllerBase
 
     #region GET
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll(int pageNumber = 1, int pageSize = 10)
     {
-        var courses = await _context.Courses.ToListAsync();
+        var totalCount = await _context.Courses.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var courses = await _context.Courses
+                                    .Skip((pageNumber - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync();
+
+        var paginationMetadata = new
+        {
+            totalCount,
+            totalPages,
+            currentPage = pageNumber,
+            pageSize
+        };
+
+        Response.Headers.Append("X-Pagination", JsonConvert.SerializeObject(paginationMetadata));
 
         return Ok(courses);
     }
