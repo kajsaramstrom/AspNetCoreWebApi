@@ -9,4 +9,7 @@ public class UserEntity
 
     [JsonIgnore]
     public virtual IEnumerable<SavedCourseEntity> SavedCourses { get; set; } = new List<SavedCourseEntity>();
+
+    [JsonIgnore]
+    public virtual IEnumerable<MyCourseEntity> MyCourses { get; set; } = new List<MyCourseEntity>();
 }
