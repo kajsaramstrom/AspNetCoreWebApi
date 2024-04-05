@@ -13,77 +13,166 @@ public class MyCourseController(DataContext context) : ControllerBase
 {
     private readonly DataContext _context = context;
 
-    #region CREATE
+    #region POST
     [HttpPost]
-    public async Task<IActionResult> Create(MyCourseDto myCourses)
+    public async Task<IActionResult> SaveCourse(MyCourseDto dto)
     {
         if (ModelState.IsValid)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == myCourses.UserEmail);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == dto.UserEmail);
+
             if (user == null)
             {
-                return NotFound("User not found");
+                var newUser = new UserEntity
+                {
+                    Email = dto.UserEmail,
+                };
+
+                await _context.Users.AddAsync(newUser);
+                await _context.SaveChangesAsync();
+
+                var myCourseToSave = new MyCourseEntity
+                {
+                    CourseId = dto.CourseId,
+                    UserId = newUser.Id,
+                };
+
+                var result = await _context.MyCourse.AddAsync(myCourseToSave);
+                await _context.SaveChangesAsync();
+
+                if (result != null)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
 
-            var course = await _context.Courses.FirstOrDefaultAsync(x => x.Id == myCourses.CourseId);
-            if (course == null)
+            else if (user != null)
             {
-                return NotFound("Course not found");
+                var myCourseToSave = new MyCourseEntity
+                {
+                    UserId = user.Id,
+                    CourseId = dto.CourseId,
+                };
+
+
+                var result = await _context.MyCourse.AddAsync(myCourseToSave);
+                await _context.SaveChangesAsync();
+
+                if (result != null)
+                {
+                    return Ok(result);
+                }
+                else
+                {
+                    return BadRequest();
+                }
             }
-
-            var myCourse = new MyCourseEntity
-            {
-                User = user,
-                Course = course
-            };
-
-            await _context.MyCourse.AddAsync(myCourse);
-            await _context.SaveChangesAsync();
-
-            return Created("Course added to user", myCourse);
         }
+
         return BadRequest();
     }
     #endregion
 
     #region GET
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetOne(int id)
+    [HttpGet("{email}")]
+    public async Task<IActionResult> GetAllForOneUser(string email)
     {
-        var myCourse = await _context.MyCourse.FindAsync(id);
-
-        if (myCourse == null)
+        if (ModelState.IsValid)
         {
-            return NotFound("Course not found");
+            var courses = await GetUserCoursesAsync(email);
+
+            if (courses == null || !courses.Any())
+            {
+                return Ok(new List<CourseEntity>());
+            }
+
+            var courseList = new List<CourseEntity>();
+            foreach (var savedCourse in courses)
+            {
+                var foundCourse = await _context.Courses.FirstOrDefaultAsync(x => x.Id == savedCourse.CourseId);
+                if (foundCourse != null)
+                {
+                    courseList.Add(foundCourse);
+                }
+            }
+
+            return Ok(courseList);
         }
 
-        return Ok(myCourse);
+        return BadRequest("Invalid request");
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
+    private async Task<IEnumerable<MyCourseEntity>> GetUserCoursesAsync(string userEmail)
     {
-        var myCourses = await _context.MyCourse.ToListAsync();
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == userEmail);
+        if (user == null)
+        {
+            return new List<MyCourseEntity> { };
+        }
 
-        return Ok(myCourses);
+        return await _context.MyCourse.Where(sc => sc.UserId == user.Id).ToListAsync();
     }
     #endregion
 
     #region DELETE
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpDelete("{email}")]
+
+    public async Task<IActionResult> Delete(string email, [FromBody] MyCourseDto dto)
     {
-        var myCourse = await _context.MyCourse.FindAsync(id);
-
-        if (myCourse == null)
+        if (ModelState.IsValid)
         {
-            return NotFound("Course not found");
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == dto.UserEmail);
+            var courses = await GetUserCoursesAsync(user!.Email);
+
+            if (courses != null)
+            {
+                var courseToDelete = courses.FirstOrDefault(x => x.CourseId == dto.CourseId);
+
+                if (courseToDelete != null)
+                {
+                    var myCourseEntityToDelete = await _context.MyCourse.FirstOrDefaultAsync(c => c.CourseId == courseToDelete.CourseId && c.UserId == user.Id);
+
+                    if (myCourseEntityToDelete != null)
+                    {
+                        _context.MyCourse.Remove(myCourseEntityToDelete);
+                        await _context.SaveChangesAsync();
+                        return Ok("Course removed from users list");
+                    }
+                }
+                return NotFound("no course to remove was found");
+            }
         }
+        return BadRequest();
+    }
 
-        _context.MyCourse.Remove(myCourse);
-        await _context.SaveChangesAsync();
+    [HttpDelete("{email}/courses")]
+    public async Task<IActionResult> DeleteAllCourses(string email)
+    {
+        if (ModelState.IsValid)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+            var courses = await GetUserCoursesAsync(user!.Email);
 
-        return Ok("Course removed from user");
+            if (courses != null)
+            {
+                foreach (var course in courses)
+                {
+                    var myCourseEntityToDelete = await _context.MyCourse.FirstOrDefaultAsync(c => c.CourseId == course.CourseId && c.UserId == user.Id);
+
+                    if (myCourseEntityToDelete != null)
+                    {
+                        _context.MyCourse.Remove(myCourseEntityToDelete);
+                    }
+                }
+                await _context.SaveChangesAsync();
+                return Ok("All courses removed from user's list");
+            }
+        }
+        return BadRequest();
     }
     #endregion
 }
