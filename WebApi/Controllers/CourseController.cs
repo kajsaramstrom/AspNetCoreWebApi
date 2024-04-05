@@ -1,6 +1,7 @@
 ﻿using Infrastructure.Context;
 using Infrastructure.Entities;
 using Infrastructure.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace WebApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[UseApiKey]
 public class CourseController(DataContext context) : ControllerBase
 {
     private readonly DataContext _context = context;
@@ -114,6 +116,25 @@ public class CourseController(DataContext context) : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok("Subscriber was updated");
+    }
+    #endregion
+
+    #region DELETE
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var course = await _context.Courses.FindAsync(id);
+
+        if (course == null)
+        {
+            return NotFound("Course not found");
+        }
+
+        _context.Courses.Remove(course);
+        await _context.SaveChangesAsync();
+
+        return Ok("Course was deleted");
     }
     #endregion
 }
