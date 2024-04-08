@@ -20,6 +20,7 @@ public class CourseController(DataContext context) : ControllerBase
     #region Create
 
     [HttpPost]
+    [Authorize]
     public async Task<IActionResult> Create(CourseDto course)
     {
         if (ModelState.IsValid)
@@ -94,6 +95,7 @@ public class CourseController(DataContext context) : ControllerBase
     #region UPDATE
 
     [HttpPut("{id}")]
+    [Authorize]
     public async Task<IActionResult> Update(int id, CourseDto dto)
     {
         var course = await _context.Courses.FindAsync(id);
@@ -122,6 +124,7 @@ public class CourseController(DataContext context) : ControllerBase
     #region DELETE
 
     [HttpDelete("{id}")]
+    [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
         var course = await _context.Courses.FindAsync(id);
