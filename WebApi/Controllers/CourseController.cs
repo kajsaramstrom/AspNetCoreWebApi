@@ -17,7 +17,7 @@ public class CourseController(DataContext context) : ControllerBase
 {
     private readonly DataContext _context = context;
 
-    #region Create
+    #region CREATE
 
     [HttpPost]
     [Authorize]
